@@ -7,7 +7,7 @@ import pexpect
 sys.path.append("../lib/")
 import tp
 
-configPath = "../etc/auto-login.ini"
+configPath = "../etc/hostList.ini"
 
 def generateCmd(cf, NUM, files, dst):
     USER_NUM = cf.sections()
