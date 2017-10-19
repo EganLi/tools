@@ -3,10 +3,22 @@
 import sys
 import pexpect
 import configparser
+import struct
+import fcntl
+import termios
 sys.path.append("../lib/")
 import tp
 
 configPath = "../etc/hostList.ini"
+
+def getWinSize():
+    if 'TIOCGWINSZ' in dir(termios):
+        TIOCGWINSZ = termios.TIOCGWINSZ
+    else:
+        TIOCGWINSZ = 1074295912
+    s = struct.pack('HHHH', 0, 0, 0, 0)
+    x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
+    return struct.unpack('HHHH', x)[0:2]
 
 def generateCmd(cf, NUM):
     USER_NUM = cf.sections()
@@ -33,6 +45,9 @@ def autoLogin(loginCmd):
         print("Have Error")
     else:
         print("Timeout")
+    
+    winsize = getWinSize();
+    process.setwinsize(winsize[0], winsize[1])
 
     process.interact()
 
