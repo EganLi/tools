@@ -1,0 +1,68 @@
+#!/usr/bin/python
+
+import sys
+import getopt
+import configparser
+import pexpect
+sys.path.append("../lib/")
+import tp
+
+configPath = "../etc/auto-login.ini"
+
+def generateCmd(cf, NUM, files, dst):
+    USER_NUM = cf.sections()
+    scpCmd = "scp -P %s %s %s@%s:%s" % (cf.get(USER_NUM[NUM], "port"), files, cf.get(USER_NUM[NUM], "user"), cf.get(USER_NUM[NUM], "ip"), dst)
+    return scpCmd, cf.get(USER_NUM[NUM], "passwd")
+
+def parseArgv(argv):
+    try:
+        opts, args = getopt.getopt(argv, "r",["help"])
+    except getopt.GetoptError:
+        print("auto-scp [-r] file1... file2")
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == "--help":
+            print("auto_scp [-r] file1... file2")
+            sys.exit()
+        elif opt == "-r":
+            if len(argv) < 3:
+                print("auto_scp [-r] file1... file2")
+                sys.exit(2)
+
+    if len(argv) < 2:
+        print("auto-scp [-r] file1... file2")
+        sys.exit(2)
+    files = ""
+    for argc in argv[:-1]:
+        files += argc
+        files += " "
+
+    return files, argv[-1]
+
+def generateSCPCmd(argv):
+    files, dst = parseArgv(argv)
+    cf = tp.readConfig(configPath)
+    NUM = tp.selectHost(cf)
+    return generateCmd(cf, NUM, files, dst)
+
+def auto_scp(scpCmd):
+    if scpCmd is None:
+        return None
+
+    process = pexpect.spawn(scpCmd[0])
+
+    idx = process.expect(['[Pp]assword', '[Uu]navailable', pexpect.EOF, pexpect.TIMEOUT], timeout=30)
+    if idx == 0:
+        process.sendline(scpCmd[1])
+    elif idx == 1:
+        print("Unavailable")
+    elif idx == 2:
+        print("Have Error")
+    else:
+        print("Timeout")
+
+    process.interact()
+
+if __name__ == "__main__":
+    scpCmd = generateSCPCmd(sys.argv[1:])
+    auto_scp(scpCmd)

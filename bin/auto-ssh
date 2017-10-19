@@ -1,0 +1,39 @@
+#!/usr/bin/python
+
+import sys
+import pexpect
+import configparser
+sys.path.append("../lib/")
+import tp
+
+configPath = "../etc/auto-login.ini"
+
+def generateCmd(cf, NUM):
+    USER_NUM = cf.sections()
+    sshCmd = "ssh -p %s %s@%s" % (cf.get(USER_NUM[NUM], "port"), cf.get(USER_NUM[NUM], "user"), cf.get(USER_NUM[NUM], "ip"))
+    return sshCmd, cf.get(USER_NUM[NUM], "passwd")
+
+def generateSSHCmd():
+    cf = tp.readConfig(configPath)
+    NUM = tp.selectHost(cf)
+    return generateCmd(cf, NUM)
+
+def autoLogin(loginCmd):
+    if loginCmd is None:
+        return None
+
+    process = pexpect.spawn(loginCmd[0])
+
+    idx = process.expect(['[Pp]assword', '[Uu]navailable', pexpect.EOF, pexpect.TIMEOUT], timeout=30)
+    if idx == 0:
+        process.sendline(loginCmd[1])
+    elif idx == 1:
+        print("Unavailable")
+    elif idx == 2:
+        print("Have Error")
+    else:
+        print("Timeout")
+
+    process.interact()
+
+autoLogin(generateSSHCmd())
