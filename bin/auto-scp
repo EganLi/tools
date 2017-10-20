@@ -43,6 +43,8 @@ def generateSCPCmd(argv):
     files, dst = parseArgv(argv)
     cf = tp.readConfig(configPath)
     NUM = tp.selectHost(cf)
+    if NUM is None:
+        sys.exit()
     return generateCmd(cf, NUM, files, dst)
 
 def auto_scp(scpCmd):

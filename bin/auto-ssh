@@ -28,6 +28,8 @@ def generateCmd(cf, NUM):
 def generateSSHCmd():
     cf = tp.readConfig(configPath)
     NUM = tp.selectHost(cf)
+    if NUM is None:
+        sys.exit()
     return generateCmd(cf, NUM)
 
 def autoLogin(loginCmd):
