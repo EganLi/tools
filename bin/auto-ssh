@@ -38,7 +38,7 @@ def autoLogin(loginCmd):
 
     process = pexpect.spawn(loginCmd[0])
 
-    idx = process.expect(['[Pp]assword', '[Uu]navailable', pexpect.EOF, pexpect.TIMEOUT], timeout=30)
+    idx = process.expect(['[Pp]assword', '[Uu]navailable', pexpect.EOF, pexpect.TIMEOUT], timeout=60)
     if idx == 0:
         process.sendline(loginCmd[1])
     elif idx == 1:

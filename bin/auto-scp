@@ -9,14 +9,19 @@ import tp
 
 configPath = "../etc/hostList.ini"
 
-def generateCmd(cf, NUM, files, dst):
+def generateCmd(cf, NUM, files, dst, rtl):
     USER_NUM = cf.sections()
-    scpCmd = "scp -P %s %s %s@%s:%s" % (cf.get(USER_NUM[NUM], "port"), files, cf.get(USER_NUM[NUM], "user"), cf.get(USER_NUM[NUM], "ip"), dst)
+    scpCmd = ""
+    if rtl:
+        scpCmd = "scp -P %s %s@%s:%s %s" % (cf.get(USER_NUM[NUM], "port"), cf.get(USER_NUM[NUM], "user"), cf.get(USER_NUM[NUM], "ip"), files, dst)
+    else:
+        scpCmd = "scp -P %s %s %s@%s:%s" % (cf.get(USER_NUM[NUM], "port"), files, cf.get(USER_NUM[NUM], "user"), cf.get(USER_NUM[NUM], "ip"), dst)
     return scpCmd, cf.get(USER_NUM[NUM], "passwd")
 
 def parseArgv(argv):
+    rtl = False
     try:
-        opts, args = getopt.getopt(argv, "r",["help"])
+        opts, args = getopt.getopt(argv, "r",["help", "rtl"])
     except getopt.GetoptError:
         print("auto-scp [-r] file1... file2")
         sys.exit(2)
@@ -24,6 +29,8 @@ def parseArgv(argv):
         if opt == "--help":
             print("auto_scp [-r] file1... file2")
             sys.exit()
+        elif opt == "--rtl":
+            rtl = True
         elif opt == "-r":
             if len(argv) < 3:
                 print("auto_scp [-r] file1... file2")
@@ -33,19 +40,19 @@ def parseArgv(argv):
         print("auto-scp [-r] file1... file2")
         sys.exit(2)
     files = ""
-    for argc in argv[:-1]:
+    for argc in args[:-1]:
         files += argc
         files += " "
 
-    return files, argv[-1]
+    return files, argv[-1], rtl
 
 def generateSCPCmd(argv):
-    files, dst = parseArgv(argv)
+    files, dst, rtl = parseArgv(argv)
     cf = tp.readConfig(configPath)
     NUM = tp.selectHost(cf)
     if NUM is None:
         sys.exit()
-    return generateCmd(cf, NUM, files, dst)
+    return generateCmd(cf, NUM, files, dst, rtl)
 
 def auto_scp(scpCmd):
     if scpCmd is None:
@@ -67,4 +74,5 @@ def auto_scp(scpCmd):
 
 if __name__ == "__main__":
     scpCmd = generateSCPCmd(sys.argv[1:])
+    print(scpCmd)
     auto_scp(scpCmd)
